@@ -58,6 +58,11 @@ class ResNet1D(keras.Model):
         inputs,
         blocks,
         block,
+        base_conv_output_size = 64,
+        base_conv_kernel_size = 7,
+        base_conv_stride = 2,
+        base_pool_size = 3,
+        base_pool_strides = 2,
         include_top=True,
         classes=1000,
         freeze_bn=True,
@@ -74,10 +79,10 @@ class ResNet1D(keras.Model):
             numerical_names = [True] * len(blocks)
 
         x = keras.layers.ZeroPadding1D(padding=3, name="padding_conv1")(inputs)
-        x = keras.layers.Conv1D(64, (7, 7), strides=(2, 2), use_bias=False, name="conv1")(x)
+        x = keras.layers.Conv1D(base_conv_output_size, base_conv_kernel_size, strides=base_conv_stride, use_bias=False, name="conv1")(x)
         x = keras_resnet.layers.BatchNormalization(axis=axis, epsilon=1e-5, freeze=freeze_bn, name="bn_conv1")(x)
         x = keras.layers.Activation("relu", name="conv1_relu")(x)
-        x = keras.layers.MaxPooling1D((3, 3), strides=(2, 2), padding="same", name="pool1")(x)
+        x = keras.layers.MaxPooling1D(base_pool_size, strides=base_pool_strides, padding="same", name="pool1")(x)
 
         features = 64
 
