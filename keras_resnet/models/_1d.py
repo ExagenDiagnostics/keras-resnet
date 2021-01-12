@@ -63,24 +63,26 @@ class ResNet1D(keras.Model):
         base_conv_stride = 2,
         base_pool_size = 3,
         base_pool_strides = 2,
+        base_batchnorm_axis = 1,
         include_top=True,
+        output_block_features = False, 
         classes=1000,
         freeze_bn=True,
         numerical_names=None,
         *args,
         **kwargs
     ):
-        if keras.backend.image_data_format() == "channels_last":
-            axis = 3
-        else:
-            axis = 1
+        #if keras.backend.image_data_format() == "channels_last":
+        #    axis = 3
+        #else:
+        #    axis = 1
 
         if numerical_names is None:
             numerical_names = [True] * len(blocks)
 
         x = keras.layers.ZeroPadding1D(padding=3, name="padding_conv1")(inputs)
         x = keras.layers.Conv1D(base_conv_output_size, base_conv_kernel_size, strides=base_conv_stride, use_bias=False, name="conv1")(x)
-        x = keras_resnet.layers.BatchNormalization(axis=axis, epsilon=1e-5, freeze=freeze_bn, name="bn_conv1")(x)
+        x = keras_resnet.layers.BatchNormalization(axis=base_batchnorm_axis, epsilon=1e-5, freeze=freeze_bn, name="bn_conv1")(x)
         x = keras.layers.Activation("relu", name="conv1_relu")(x)
         x = keras.layers.MaxPooling1D(base_pool_size, strides=base_pool_strides, padding="same", name="pool1")(x)
 
@@ -102,16 +104,21 @@ class ResNet1D(keras.Model):
 
             outputs.append(x)
 
-        if include_top:
+        if include_top and not output_block_features:
             assert classes > 0
 
             x = keras.layers.GlobalAveragePooling1D(name="pool5")(x)
             x = keras.layers.Dense(classes, activation="softmax", name="fc1000")(x)
 
             super(ResNet1D, self).__init__(inputs=inputs, outputs=x, *args, **kwargs)
-        else:
+
+        if not include_top and not output_block_features:
             # Else output each stages features
+            super(ResNet1D, self).__init__(inputs=inputs, outputs=x, *args, **kwargs)
+
+        if not include_top and output_block_features:
             super(ResNet1D, self).__init__(inputs=inputs, outputs=outputs, *args, **kwargs)
+
 
 
 class ResNet1D18(ResNet1D):
